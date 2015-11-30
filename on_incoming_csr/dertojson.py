@@ -42,7 +42,6 @@ def asn1_SEQ_to_json(crl_der, i, limit=0):
 			# OBJECT IDENTIFIER
 			# it's value will be the key for next value
 			next_key = asn1_get_value(crl_der, i)
-			# TODO: decode key
 			next_key = parse_oid(next_key)
 
 		elif tag_nr == 0x10:
@@ -72,7 +71,7 @@ def asn1_SEQ_to_json(crl_der, i, limit=0):
 	return ret_json
 
 
-def extract_crl_info(crl_der):
+def extract_csr_info(crl_der):
 		csr_json = {}
 
 		# ROOT
@@ -80,16 +79,16 @@ def extract_crl_info(crl_der):
 
 		# DATA
 		i = asn1_node_first_child(crl_der,i)
-		csr_json["data"] = {}
+		csr_json["csr"] = {}
 
 		# VERSION
 		i = asn1_node_first_child(crl_der,i)
 		value = asn1_get_value(crl_der,i)
-		csr_json["data"]["version"] = ord(asn1_get_value(crl_der,i))
+		csr_json["csr"]["version"] = ord(asn1_get_value(crl_der,i))
 
 		# SUBJECT
 		i = asn1_node_next(crl_der,i)
-		csr_json["data"]["subject"] = asn1_SEQ_to_json(crl_der, i)
+		csr_json["csr"]["subject"] = asn1_SEQ_to_json(crl_der, i)
 
 		return csr_json
 

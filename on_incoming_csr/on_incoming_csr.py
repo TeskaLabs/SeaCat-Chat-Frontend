@@ -1,7 +1,7 @@
 import sys, getopt, os, json
 import time, datetime
 import hashlib
-from dertojson import extract_crl_info
+from dertojson import extract_csr_info
 
 _OPTIONS = {
 	"SECRET" 			: "app-secret-changeme",
@@ -16,10 +16,10 @@ _OPTIONS = {
 
 
 def read_csr(csr_filename):
-	csr_der 	= open(csr_filename)
-	ret 		= {}
-	ret['csr'] 	= os.path.basename(csr_filename)
-	ret.update(extract_crl_info(csr_der.read()))
+	csr_der 		= open(csr_filename)
+	ret 			= {}
+	ret['filename'] = os.path.basename(csr_filename)
+	ret.update(extract_csr_info(csr_der.read()))
 
 	return ret
 
