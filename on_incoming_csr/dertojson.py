@@ -7,22 +7,44 @@ from asn1tinydecoder import asn1_node_root, asn1_get_all, asn1_get_value, \
 
 def parse_oid(value):
 	oid_bytes = [ord(x) for x in value]
-	b = oid_bytes[0] % 40
-	a = (oid_bytes[0] - b) / 40
-	oid_array = ["{}".format(a), "{}".format(b)]
 
-	for x in oid_bytes[1:]:
-		oid_array.append("{}".format(x))
+	oid2 	= oid_bytes[0] % 40
+	oid1 	= (oid_bytes[0] - oid2) / 40
 
-	oid = ".".join(oid_array)
-	from oids import oids
-	if oids.get(oid) is not None:
-		return oids[oid]["d"]
-	
-	return ".".join(oid_array)
+	oid 	= []
+	oid.append(oid1)
+	oid.append(oid2)
+
+	# initial result value
+	result = 0
+	# we start with the second byte
+	i = 1
+	# spin it!
+	while i < len(oid_bytes):
+		# Get first 7 bits
+		seven_bits = (oid_bytes[i] & 0x7F)
+		# update result
+		result = result | seven_bits
+
+		# Check the value of the last bit of this byte
+		if (oid_bytes[i] & 0x80) == 0:
+			# Last bit = 0 -> this is the last byte of OID node
+			# result is now the value of OID node -> store it!
+			oid.append(result)
+			# reset result
+			result = 0
+		else:
+			# Last bit = 1 -> this is NOT the last byte of OID node!
+			# Just reserve space for 7 bits from next byte
+			result = result << 7
+
+		# move to next byte
+		i=i+1
+
+	return ".".join([str(x) for x in oid])
 
 
-def asn1_SEQ_to_json(crl_der, i, limit=0):
+def asn1_SEQ_to_json(crl_der, i, verbose=False):
 	last_byte = i[2]
 	i = asn1_node_first_child(crl_der, i)
 
@@ -43,6 +65,9 @@ def asn1_SEQ_to_json(crl_der, i, limit=0):
 			# it's value will be the key for next value
 			next_key = asn1_get_value(crl_der, i)
 			next_key = parse_oid(next_key)
+			from oids import oids
+			if oids.get(next_key) is not None:
+				next_key = oids[next_key]["d"]
 
 		elif tag_nr == 0x10:
 			# SEQUENCE / SEQUENCE OF
@@ -57,9 +82,13 @@ def asn1_SEQ_to_json(crl_der, i, limit=0):
 		elif tag_nr == 0x02:
 			# INTEGER
 			ret_json[str_key] = ord(asn1_get_value(crl_der, i))
+			# TODO: long integers
 
 		elif tag_nr == 0x0C:
 			# UTF8String
+			ret_json[str_key] = asn1_get_value(crl_der, i)
+
+		else:
 			ret_json[str_key] = asn1_get_value(crl_der, i)
 
 
