@@ -1,7 +1,7 @@
 import sys, getopt, os, json
 import time, datetime
 import hashlib
-from dertojson import extract_csr_info
+from asn1dertools import extract_csr_info_json
 
 _OPTIONS = {
 	"SECRET" 			: "app-secret-changeme",
@@ -19,13 +19,13 @@ def read_csr(csr_filename):
 	csr_der 		= open(csr_filename)
 	ret 			= {}
 	ret['filename'] = os.path.basename(csr_filename)
-	ret.update(extract_csr_info(csr_der.read()))
+	ret['csr'] 		= extract_csr_info_json(csr_der.read())
 
 	return ret
 
 
 
-def create_ticket(csr_name, timestamp_expires=None):
+def filename_to_ticket(csr_name, timestamp_expires=None):
 	if timestamp_expires is None:
 		timestamp_expires = int(time.time())+5*24*60*60 # 5 days
 
@@ -54,12 +54,13 @@ def store_csr_frontend(req_dict, method='PUT'):
 	import urllib2
 	opener = urllib2.build_opener(urllib2.HTTPHandler)
 	print "{} {} {}".format(str(req_dict), method, _OPTIONS["FRONTEND_REQ_URL"])
-	request = urllib2.Request(
-		url=_OPTIONS["FRONTEND_REQ_URL"],
-		data=json.dumps(req_dict))
-	request.add_header('Content-Type', 'application/json')
-	request.get_method = lambda: method
 	try:
+		request = urllib2.Request(
+			url=_OPTIONS["FRONTEND_REQ_URL"],
+			data=json.dumps(req_dict))
+		request.add_header('Content-Type', 'application/json')
+		request.get_method = lambda: method
+	
 		url = opener.open(request)
 		print "DONE"
 	except Exception as e: print e
@@ -69,12 +70,12 @@ def store_csr_frontend(req_dict, method='PUT'):
 def process_csr(csr_filename):
 	# Create ticket
 	filename, ext 	= os.path.splitext(csr_filename)
-	ticket = create_ticket(filename)
+	ticket = filename_to_ticket(filename)
 
 	# Rename to ticket name
 	abspath_csr_filename 	= os.path.abspath(csr_filename)
 	abspath_csr_dirname 	= os.path.dirname(abspath_csr_filename)
-	new_csr_filename 			= os.path.join(abspath_csr_dirname, ticket+".csr")
+	new_csr_filename 			= os.path.join(abspath_csr_dirname, ticket+ext)
 	os.rename(abspath_csr_filename, new_csr_filename)
 
 	# Read csr
