@@ -54,9 +54,8 @@ def asn1_node_is_child_of((ixs,ixf,ixl), (jxs,jxf,jxl)):
 
 ##### ACCESS PRIMITIVES
 
-# get content and verify type byte
-def asn1_get_value_of_type(der,(ixs,ixf,ixl),asn1_type):
-	asn1_type_table = {
+def asn1_get_type_table():
+	return {
 		'BOOLEAN':           0x01,	'INTEGER':           0x02,
 		'BIT STRING':        0x03,	'OCTET STRING':      0x04,
 		'NULL':              0x05,	'OBJECT IDENTIFIER': 0x06,
@@ -65,7 +64,17 @@ def asn1_get_value_of_type(der,(ixs,ixf,ixl),asn1_type):
 		'UTCTime':           0x17,	'ENUMERATED':        0x0A,
 		'UTF8String':        0x0C,	'PrintableString':   0x13,
 	}
-	if asn1_type_table[asn1_type] != ord(der[ixs]):
+
+def asn1_get_tag_type(tag=0x00):
+	for asn1_type, asn1_tag in asn1_get_type_table().items():
+		if asn1_tag == tag:
+			return asn1_type
+	return None
+
+# get content and verify type byte
+def asn1_get_value_of_type(der,(ixs,ixf,ixl),asn1_type):
+	asn1_type_table = asn1_get_type_table()
+	if asn1_type_table[asn1_type] != asn1_get_tag_number(der, (ixs,ixf,ixl)):
 		raise ValueError('Error: Expected type was: '+
 			hex(asn1_type_table[asn1_type])+ 
 			' Found: 0x'+der[ixs].encode('hex')) 
