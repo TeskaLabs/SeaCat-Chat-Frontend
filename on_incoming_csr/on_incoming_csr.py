@@ -9,10 +9,10 @@ config = ConfigParser.ConfigParser()
 
 def filename_to_ticket(filename, timestamp_expires=None):
 	if timestamp_expires is None:
-		timestamp_expires = int(time.time())+5*24*60*60 # 5 days
+		timestamp_expires = int(time.time())+5*24*60*60 # 5 days... TODO: from config
 
 	str_timestamp_expires = str(timestamp_expires)
-	ticket = hashlib.sha224(os.path.splitext(filename)[0]+config.get("default", "secret")+str_timestamp_expires).hexdigest()
+	ticket = hashlib.sha224(filename+config.get("default", "secret")+str_timestamp_expires).hexdigest()
 	return ticket + "_" + str_timestamp_expires
 
 
