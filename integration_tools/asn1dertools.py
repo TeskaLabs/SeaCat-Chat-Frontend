@@ -83,7 +83,11 @@ def der_to_json(crl_der, (ixs,ixf,ixl), last_byte=None):
 def decode_value(value, value_type):
 	if value_type == 'INTEGER':
 		# TODO: long int
-		value = ord(value)
+		try:
+			t = ord(value)
+			value = t
+		except:
+			value = value
 	if value_type == 'OBJECT IDENTIFIER':
 		value = parse_oid(value)
 	if value_type == 'BIT STRING':
@@ -127,3 +131,14 @@ def extract_csr_info_json(crl_der, byte_strings=False):
 
 		return csr_json
 
+
+def main():
+	cert_file = open('/Users/mpavelka/Desktop/EvalWildFuse/seacat/var/csr/proc/d294acea87059ee7d1fdf1584825b9e414af460493543f3a100e63a380aa65da.csr')
+	der = cert_file.read()
+	i = asn1_node_root(der)
+	import pprint
+	pp = pprint.PrettyPrinter(indent=4)
+	pp.pprint(der_to_json(der, i))
+
+if __name__ == '__main__':
+	main()
